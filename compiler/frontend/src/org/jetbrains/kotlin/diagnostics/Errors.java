@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.cfg.WhenMissingCase;
 import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.config.LanguageVersion;
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.resolve.VarianceConflictDiagnosticData;
 import org.jetbrains.kotlin.resolve.calls.inference.InferenceErrorData;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.tower.WrongResolutionToClassifier;
+import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker;
 import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker.Compatibility.Incompatible;
 import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData;
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.SinceKotlinInfo;
@@ -572,12 +574,32 @@ public interface Errors {
     DiagnosticFactory0<KtTypeAlias> ACTUAL_TYPE_ALIAS_WITH_USE_SITE_VARIANCE = DiagnosticFactory0.create(ERROR, DECLARATION_SIGNATURE);
     DiagnosticFactory0<KtTypeAlias> ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION = DiagnosticFactory0.create(ERROR, DECLARATION_SIGNATURE);
 
+    interface DiagnosticFactoryForIncompatible {
+        @Nullable
+        Incompatible getFirstIncompatibility();
+    }
+
+    class DiagnosticFactory3ForIncompatible<E extends PsiElement, A, B, C extends Map<Incompatible, Collection<MemberDescriptor>>>
+            extends DiagnosticFactory3<E, A, B, C>
+            implements DiagnosticFactoryForIncompatible {
+
+        protected DiagnosticFactory3ForIncompatible(Severity severity, PositioningStrategy<? super E> positioningStrategy) {
+            super(severity, positioningStrategy);
+        }
+
+        @Nullable
+        @Override
+        public Incompatible getFirstIncompatibility() {
+            return null;
+        }
+    }
+
     DiagnosticFactory3<KtNamedDeclaration, MemberDescriptor, ModuleDescriptor,
             Map<Incompatible, Collection<MemberDescriptor>>> NO_ACTUAL_FOR_EXPECT =
-            DiagnosticFactory3.create(ERROR, DECLARATION_SIGNATURE);
+            DiagnosticFactory3.create(ERROR, INCOMPATIBLE_DECLARATION);
     DiagnosticFactory2<KtNamedDeclaration, MemberDescriptor,
             Map<Incompatible, Collection<MemberDescriptor>>> ACTUAL_WITHOUT_EXPECT =
-            DiagnosticFactory2.create(ERROR, DECLARATION_SIGNATURE);
+            DiagnosticFactory2.create(ERROR, INCOMPATIBLE_DECLARATION);
 
     DiagnosticFactory2<KtNamedDeclaration, ClassDescriptor,
             List<Pair<MemberDescriptor, Map<Incompatible, Collection<MemberDescriptor>>>>> NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS =
